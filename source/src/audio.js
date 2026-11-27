@@ -114,7 +114,7 @@ export class Sfx {
   check() { this.tone(784, 0.1, 0.14, 'triangle'); this.tone(1175, 0.16, 0.14, 'triangle', 0.08); }
   car() { if (this._gate('car', 900)) { this.tone(64, 0.95, 0.16, 'sawtooth', 0, 50, 0.25); this.noise(0.95, 0.07, 220, 110, 0.7, 'lowpass'); } }
   step() { if (this._gate('step', 230)) this.noise(0.05, 0.035, 1800, 900, 1.2, 'bandpass'); }
-  whiteout() {
+  flash() {
     this.noise(1.6, 0.3, 500, 6000, 0.6, 'bandpass'); this.noise(1.6, 0.14, 4000, 12000, 0.5, 'highpass', 0.1);
     this.tone(187, 0.5, 0.25, 'sine', 0, 90);
   }

@@ -1,4 +1,4 @@
-# whiteout-survival-playable
+# HTML5 playable
 
 An HTML5 playable in the "arcade idle" style: walk a survivor around a snowy yard, carry logs and coal to the counters, collect the cash, buy the upgrade, reach the end card. About 25 seconds of play.
 
@@ -13,10 +13,11 @@ Open `index.html` in any modern browser (phone, tablet or computer). It is one s
 
 | Path | What it is |
 | --- | --- |
-| `index.html` | The built playable, 673,432 bytes, sha256 `e2a9804ede33da484375bedaf8a58c7ea5bc21f9a33b9b5c65c193bc9263eaf2` |
+| `index.html` | The built playable (the output of `source/build.mjs`) |
 | `source/src/` | Game source (Three.js r170 scene built in code, DOM/CSS/SVG HUD, WebAudio sound effects) |
 | `source/build.mjs` | esbuild script that bundles everything into `source/dist/index.html` |
-| `source/tools-*.mjs`, `source/run-matrix.sh` | Headless-Chrome scripts that play the build from start to end card with real input events |
+| `source/tools-play.mjs`, `source/run-matrix.sh` | Headless-Chrome scripts that play the build from start to end card with real input events |
+| `source/tools-fit.mjs` | Gameplay and end-card screenshots plus on-screen sizes at desktop and iPhone viewports |
 | `source/assets/fonts/` | Lilita One and Russo One (SIL OFL, licences included) |
 
 ## Build
@@ -43,6 +44,14 @@ The scripts expect Chrome at `/usr/local/bin/google-chrome`. `--url http://127.0
 
 The build keeps two aids the scripts use: `?q=0|1|2` pins the render quality, and `window.__playable` exposes the game state for frame-exact stepping. Neither reaches a server; the page has none.
 
+## Screen sizes
+
+The window is always filled. What changes with its size is how much of the world is shown, not how large it is drawn:
+
+- Phones keep the original framing: portrait shows the yard's width, landscape moves in a little.
+- Larger windows (desktop, tablets) never draw the world larger than 66 CSS px per world unit, the scale of the 720 x 900 design frame; they show more of the yard instead, up to 22 world units of height. Only windows taller than that (above about 1450 CSS px) draw the world larger.
+- The money counter, hint and joystick stop growing at their 720 x 900 size; the end card's title and badges stop at 1.4 times it.
+
 ## Notes
 
-The "Whiteout Survival" name and logo and the App Store and Google Play badges shown on the end card are trademarks of their owners. The end card's buttons only play a tap sound; no store link is wired.
+The playable shows no game name: no logo, no title, and the page title is "Playable". The App Store and Google Play badges on the end card are trademarks of their owners. The end card's buttons only play a tap sound; no store link is wired.

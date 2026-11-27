@@ -17,7 +17,7 @@ for (const [W, H, D, touch, kind] of V) {
   await p.waitForFunction('window.__playable && window.__playable.mode==="play"');
   // advance one second of game time frame by frame, then capture the opening view
   await p.evaluate(() => { const P = window.__playable; P.setManual(true); for (let i = 0; i < 30; i++) P.step(1 / 30); });
-  const g = `${out}/whiteout-survival-playable-${W}x${H}-${kind}-gameplay.png`;
+  const g = `${out}/playable-${W}x${H}-${kind}-gameplay.png`;
   await p.screenshot({ path: g });
   const info = await p.evaluate(() => {
     const c = document.getElementById('c'), P = window.__playable;
@@ -27,9 +27,9 @@ for (const [W, H, D, touch, kind] of V) {
   });
   // jump to the end card (the win hook) and let its animation finish
   await p.evaluate(() => { const P = window.__playable; P.game.hooks.onWin(); for (let i = 0; i < 160; i++) P.step(1 / 30); });
-  const e = `${out}/whiteout-survival-playable-${W}x${H}-${kind}-endcard.png`;
+  const e = `${out}/playable-${W}x${H}-${kind}-endcard.png`;
   await p.screenshot({ path: e });
-  info.endInside = await p.evaluate(() => ['end-logo', 'end-tag', 'search', 'b-apple', 'b-google', 'replay'].every((id) => { const r = document.getElementById(id).getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && r.width > 0; }));
+  info.endInside = await p.evaluate(() => ['end-tag', 'b-apple', 'b-google', 'replay'].every((id) => { const r = document.getElementById(id).getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && r.width > 0; }));
   res.push({ viewport: `${W}x${H}@${D}`, kind, ...info, errors: errs, externalRequests: ext });
   await Promise.race([b.close(), new Promise((r) => setTimeout(r, 4000))]);
 }

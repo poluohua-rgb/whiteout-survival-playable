@@ -51,7 +51,7 @@ if (args.audio) {
   // log every sound effect call with its game-clock time so the run's audio can be rendered afterwards
   await page.evaluate(() => {
     const P = window.__playable, sfx = P.sfx; window.__sfxLog = []; let depth = 0;
-    for (const m of ['pick', 'place', 'cash', 'unlock2', 'check', 'car', 'step', 'whiteout', 'beam', 'shatter', 'cheer', 'tap', 'noise', 'tone', 'ambience']) {
+    for (const m of ['pick', 'place', 'cash', 'unlock2', 'check', 'car', 'step', 'flash', 'beam', 'shatter', 'cheer', 'tap', 'noise', 'tone', 'ambience']) {
       const orig = sfx[m].bind(sfx);
       sfx[m] = (...a) => { if (depth === 0 && sfx.ok) window.__sfxLog.push([P.clock, m, a]); depth++; try { return orig(...a); } finally { depth--; } };
     }
@@ -169,7 +169,7 @@ if (final.mode !== 'play') {
   if (STEP) await wait(+(args.tail || 1500));
   endOk = await page.evaluate(() => {
     const vis = (id) => { const e = document.getElementById(id); if (!e) return false; const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 4 && r.height > 4 && cs.visibility !== 'hidden' && cs.display !== 'none' && r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1; };
-    return { logo: vis('end-logo'), tag: vis('end-tag'), search: vis('search'), apple: vis('b-apple'), google: vis('b-google'), replay: vis('replay'), typed: document.getElementById('search').textContent.trim() };
+    return { tag: vis('end-tag'), apple: vis('b-apple'), google: vis('b-google'), replay: vis('replay'), text: document.getElementById('end').innerText.replace(/\s+/g, ' ').trim(), title: document.title };
   });
   if (args.replay) {
     const r = await page.evaluate(() => { const b = document.getElementById('replay').getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });

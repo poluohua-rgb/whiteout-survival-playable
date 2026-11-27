@@ -14,7 +14,7 @@ const CTA_URL = '';
 const canvas = document.getElementById('c');
 const sfx = new Sfx();
 let renderer, ui, scene, world, game, endScene, camera, snow;
-let mode = 'play'; // play | whiteout | end
+let mode = 'play'; // play | flash | end
 let view = { w: 1, h: 1, dist: 25, Hs: CAM.designH, px: 66, zoom: 1 };
 const camTarget = new THREE.Vector3();
 const input = { x: 0, y: 0 };
@@ -23,6 +23,8 @@ const keys = new Set();
 let lastInputT = 0, started = false, clock = 0, modeT = 0;
 
 const WIDE_ZOOM = 1; // the reference keeps one zoom level for the whole run
+const PX_MAX = 66; // CSS px per world unit in the 720 x 900 reference frame
+const HS_MAX = 22; // most world height shown before the world is allowed to grow again
 let fpsAvg = 60;
 
 function disposeScene(s) {
@@ -38,7 +40,7 @@ function newGame() {
   scene = new THREE.Scene();
   world = buildWorld(scene);
   if (quality > 0) world.sun.shadow.mapSize.setScalar(1024);
-  game = new Game(scene, world, sfx, { onWin: startWhiteout });
+  game = new Game(scene, world, sfx, { onWin: startFlash });
   // drifting snow
   const n = 240, pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 34; pos[i * 3 + 1] = Math.random() * 14; pos[i * 3 + 2] = (Math.random() - 0.5) * 34; }
@@ -49,7 +51,7 @@ function newGame() {
   camTarget.set(game.player.x, 0.6, game.player.z); view.zoom = 1;
   mode = 'play'; modeT = 0; started = false; lastInputT = clock;
   ui.setMoney(game.money);
-  ui.showEnd(false); ui.whiteout(false); ui.showHint(true);
+  ui.showEnd(false); ui.flash(false); ui.showHint(true);
   layout();
 }
 
@@ -66,7 +68,11 @@ function layout() {
   // very tall phones also move in a little, since they have height to spare
   if (a <= 0.8) Hs = Math.min(CAM.designW / a, CAM.designH * 1.9) * lerp(1, 0.86, clamp((0.8 - a) / 0.3, 0, 1));
   else Hs = CAM.designH * lerp(1, 0.64, clamp((a - 0.8) / 1.0, 0, 1));
+  // Large windows (desktop, tablets) show more of the world instead of magnifying it: the world is never drawn
+  // larger than in the 720 x 900 reference frame, until HS_MAX units of it are on screen.
+  Hs = Math.max(Hs, Math.min(h / PX_MAX, HS_MAX));
   view.Hs = Hs;
+  if (snow) { const k = Math.max(1, (Hs * a) / 30); snow.scale.set(k, 1, k); }
   view.dist = Hs / (2 * Math.tan((CAM.fov * Math.PI) / 360));
   view.px = h / Hs;
   camera.aspect = a; camera.updateProjectionMatrix();
@@ -141,11 +147,11 @@ function updateEdgeArrow() {
   ui.edgeArrow(true, ((_v.x * k + 1) / 2) * view.w, ((1 - _v.y * k) / 2) * view.h, ang);
 }
 
-function startWhiteout() {
+function startFlash() {
   if (mode !== 'play') return;
-  mode = 'whiteout'; modeT = 0;
-  ui.whiteout(true); ui.showHint(false);
-  sfx.whiteout(); sfx.ambience(false);
+  mode = 'flash'; modeT = 0;
+  ui.flash(true); ui.showHint(false);
+  sfx.flash(); sfx.ambience(false);
   pointer.id = null;
 }
 
@@ -161,21 +167,20 @@ function frame(now) {
 }
 function tick(dt) {
   clock += dt; modeT += dt;
-  ui.update(dt);
-  if (mode === 'play' || mode === 'whiteout') {
+  if (mode === 'play' || mode === 'flash') {
     readInput();
-    if (mode === 'whiteout') { input.x = 0; input.y = 0; }
+    if (mode === 'flash') { input.x = 0; input.y = 0; }
     game.update(dt, input);
     placeCamera(dt, false);
-    updateSnow(dt * (mode === 'whiteout' ? 6 : 1));
+    updateSnow(dt * (mode === 'flash' ? 6 : 1));
     ui.setMoney(game.moneyShown);
     ui.showHint(mode === 'play' && (!started || clock - lastInputT > 6));
     updateEdgeArrow();
     renderer.render(scene, camera);
-    if (mode === 'whiteout' && modeT > 0.75) {
+    if (mode === 'flash' && modeT > 0.75) {
       mode = 'end'; modeT = 0;
       endScene.reset(); ui.edgeArrow(false); ui.stickAt(0, 0, 0, 0, false);
-      ui.showEnd(true); ui.whiteout(false);
+      ui.showEnd(true); ui.flash(false);
     }
   } else {
     endScene.update(dt);
@@ -239,7 +244,7 @@ function bindInput() {
   if (window.visualViewport) window.visualViewport.addEventListener('resize', relayout);
 
   document.getElementById('replay').addEventListener('click', (e) => { e.stopPropagation(); replay(); });
-  for (const id of ['b-apple', 'b-google', 'search', 'end-tag']) {
+  for (const id of ['b-apple', 'b-google', 'end-tag']) {
     document.getElementById(id).addEventListener('click', () => { sfx.tap(); if (CTA_URL) window.open(CTA_URL, '_blank', 'noopener'); });
   }
 }

@@ -130,6 +130,8 @@ export class EndScene {
     const needW = land ? 0 : 5.3;
     const visW = 2 * dist * Math.tan((fov * Math.PI) / 360) * a;
     if (visW < needW) fov = (Math.atan(needW / a / (2 * dist)) * 360) / Math.PI;
+    // large windows see more of the plain instead of larger characters (at most 150 CSS px per unit at their depth)
+    fov = Math.max(fov, Math.min(46, (Math.atan(h / 150 / (2 * dist)) * 360) / Math.PI));
     cam.fov = fov; cam.aspect = a;
     cam.position.set(-0.45, 1.95, dist);
     cam.rotation.set(0.03, 0, 0);
