@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const out = await build({
   entryPoints: ['src/main.js'], bundle: true, minify: true, format: 'iife', target: 'es2020',
+  loader: { '.glb': 'binary' },
   write: false, legalComments: 'none', logLevel: 'warning',
 });
 let js = out.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');

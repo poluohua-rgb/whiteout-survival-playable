@@ -50,7 +50,7 @@ const CAR_COLORS = ['#c9333f', '#4aa9d7', '#3c4250', '#c9333f', '#4aa9d7', '#556
 const CAR_SCALE = 1.06;
 
 export class Game {
-  constructor(scene, world, sfx, hooks) {
+  constructor(scene, world, sfx, playerMesh, hooks) {
     this.scene = scene; this.W = world; this.sfx = sfx; this.hooks = hooks;
     this.t = 0;
     this.state = 'play'; // play | won
@@ -79,7 +79,7 @@ export class Game {
     this.coal = { t: L.coalTable, stock: 0, inbound: 0, cash: 0, cashIn: 0, zone: null };
 
     this.player = { x: L.start.x, z: L.start.z, h: Math.atan2(L.zone25.x - L.start.x, L.zone25.z - L.start.z), moving: false, carry: 0, carryType: null, inbound: 0, sway: 0, vx: 0, vz: 0 };
-    this.playerMesh = M.makeCharacter({ coat: '#2f8cc0', trim: '#f6f3ee', pack: '#22648c', boots: '#3a2a28', mitt: '#2a3a55' });
+    this.playerMesh = playerMesh;
     scene.add(this.playerMesh);
 
     this._buildZones();

@@ -6,6 +6,7 @@ import { Game } from './game.js';
 import { Sfx } from './audio.js';
 import { UI } from './ui.js';
 import { EndScene } from './endscene.js';
+import { loadPlayer, makePlayer } from './player.js';
 import * as T from './textures.js';
 
 // Set to a store link to make the end-card buttons navigate. Left empty so the file never touches the network.
@@ -13,7 +14,7 @@ const CTA_URL = '';
 
 const canvas = document.getElementById('c');
 const sfx = new Sfx();
-let renderer, ui, scene, world, game, endScene, camera, snow;
+let renderer, ui, scene, world, game, endScene, camera, snow, playerTemplate;
 let mode = 'play'; // play | flash | end
 let view = { w: 1, h: 1, dist: 25, Hs: CAM.designH, px: 66, zoom: 1 };
 const camTarget = new THREE.Vector3();
@@ -30,6 +31,7 @@ let fpsAvg = 60;
 function disposeScene(s) {
   s.traverse((o) => {
     if (o.geometry) o.geometry.dispose();
+    if (o.isSkinnedMesh) o.skeleton.dispose();
     const m = o.material;
     if (m && m !== undefined) (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm.map) mm.map.dispose(); mm.dispose(); });
   });
@@ -40,7 +42,7 @@ function newGame() {
   scene = new THREE.Scene();
   world = buildWorld(scene);
   if (quality > 0) world.sun.shadow.mapSize.setScalar(1024);
-  game = new Game(scene, world, sfx, { onWin: startFlash });
+  game = new Game(scene, world, sfx, makePlayer(playerTemplate), { onWin: startFlash });
   // drifting snow
   const n = 240, pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 34; pos[i * 3 + 1] = Math.random() * 14; pos[i * 3 + 2] = (Math.random() - 0.5) * 34; }
@@ -255,6 +257,7 @@ async function boot() {
     await Promise.all([document.fonts.load('40px "Lilita One"'), document.fonts.load('40px "Russo One"')]);
   } catch (e) { /* fall back to system fonts */ }
   const Q = new URLSearchParams(location.search);
+  playerTemplate = await loadPlayer();
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
