@@ -1,0 +1,105 @@
+<!doctype html>
+<!--
+  Single-file playable. Everything is inlined; it makes no network requests.
+  Bundled open-source parts:
+    three.js r170, Copyright 2010-2024 Three.js Authors, MIT License (SPDX-License-Identifier: MIT)
+    Lilita One, Copyright (c) 2011 Juan Montoreano, SIL Open Font License 1.1
+    Russo One, Copyright (c) 2011-2012 Jovanny Lemonad, SIL Open Font License 1.1
+  The 3D models, textures and sound effects are generated in code.
+  The App Store badge and the Google Play badge are trademarks of their owners.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#e3e9f2">
+<title>Playable</title>
+<link rel="icon" href="data:,">
+<style>
+/*FONTS*/
+:root{--ui:1;--eu:1;--tw:520;--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#e3e9f2;position:fixed;inset:0;
+  touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+#c{position:fixed;left:0;top:0;width:100%;height:100%;display:block;outline:none}
+#haze{position:fixed;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.04) 14%,rgba(255,255,255,0) 30%),radial-gradient(120% 90% at 50% 55%,rgba(255,214,200,0) 60%,rgba(255,225,215,.07) 100%)}
+#ui{position:fixed;inset:0;overflow:hidden;font-family:'Lilita One','Arial Black',sans-serif;cursor:grab}
+#ui:active{cursor:grabbing}
+#hud{position:absolute;left:calc(var(--sl) + 8px*var(--ui));top:calc(var(--st) + 20px*var(--ui));pointer-events:none}
+#money{position:relative;width:calc(212px*var(--ui));height:calc(60px*var(--ui))}
+#bill{position:absolute;left:0;top:0;width:calc(94px*var(--ui));z-index:2;filter:drop-shadow(0 calc(2px*var(--ui)) calc(2px*var(--ui)) rgba(20,40,20,.35))}
+#bill svg{display:block;width:100%}
+#pill{position:absolute;left:calc(60px*var(--ui));top:calc(9px*var(--ui));width:calc(148px*var(--ui));height:calc(41px*var(--ui));
+  border-radius:calc(21px*var(--ui));background:rgba(58,66,84,.58);border:calc(2px*var(--ui)) solid rgba(24,28,40,.8);z-index:1}
+#amount{position:absolute;left:62%;top:50%;transform:translate(-50%,-52%);color:#fff;font-size:calc(31px*var(--ui));line-height:1;
+  -webkit-text-stroke:calc(5px*var(--ui)) #23262f;paint-order:stroke fill;letter-spacing:calc(.5px*var(--ui))}
+#amount.bump{animation:bump .14s ease-out}
+@keyframes bump{0%{transform:translate(-50%,-52%) scale(1.22)}100%{transform:translate(-50%,-52%) scale(1)}}
+#hint{position:absolute;left:50%;bottom:calc(var(--sb) + 9%);transform:translateX(-50%);opacity:0;transition:opacity .35s;pointer-events:none;text-align:center}
+#hint.on{opacity:1}
+#hint-hand{width:calc(64px*var(--ui));margin:0 auto;animation:swipe 1.5s ease-in-out infinite}
+#hint-hand svg{display:block;width:100%;filter:drop-shadow(0 3px 4px rgba(30,20,30,.35))}
+#hint-text{margin-top:calc(4px*var(--ui));color:#fff;font-size:calc(30px*var(--ui));-webkit-text-stroke:calc(5px*var(--ui)) #2a2d3a;paint-order:stroke fill;letter-spacing:1px;white-space:nowrap}
+@keyframes swipe{0%,100%{transform:translate(-46%,0) rotate(-8deg)}50%{transform:translate(46%,-18%) rotate(8deg)}}
+#stick{position:absolute;left:0;top:0;width:0;height:0;opacity:0;pointer-events:none;transition:opacity .12s}
+#stick.on{opacity:1}
+#stick::before{content:"";position:absolute;left:calc(-66px*var(--ui));top:calc(-66px*var(--ui));width:calc(132px*var(--ui));height:calc(132px*var(--ui));
+  border-radius:50%;background:rgba(255,255,255,.16);border:calc(3px*var(--ui)) solid rgba(255,255,255,.7);box-shadow:0 2px 10px rgba(40,30,40,.25)}
+#knob{position:absolute;left:calc(-27px*var(--ui));top:calc(-27px*var(--ui));width:calc(54px*var(--ui));height:calc(54px*var(--ui));border-radius:50%;
+  background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(40,30,40,.4)}
+#edge{position:absolute;left:0;top:0;width:0;height:0;opacity:0;pointer-events:none}
+#edge.on{opacity:1}
+#edge::before{content:"";position:absolute;left:calc(-30px*var(--ui));top:calc(-17px*var(--ui));border-style:solid;
+  border-width:calc(17px*var(--ui)) 0 calc(17px*var(--ui)) calc(30px*var(--ui));border-color:transparent transparent transparent #ffd53a;
+  filter:drop-shadow(0 0 3px #fff) drop-shadow(0 2px 3px rgba(60,30,0,.5));animation:nudge .7s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(-6px)}50%{transform:translateX(4px)}}
+#white{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,#fff 0%,#f4f7fb 60%,#e6ecf5 100%);opacity:0;pointer-events:none;transition:opacity .6s ease-in;z-index:5}
+#white.on{opacity:1}
+#end{position:absolute;inset:0;display:none;z-index:4;cursor:default}
+#end.on{display:block}
+#hint-keys{display:none;margin-top:calc(2px*var(--ui));color:#fff;font-family:'Russo One','Arial Black',sans-serif;font-size:calc(15px*var(--ui));-webkit-text-stroke:calc(3.5px*var(--ui)) #2a2d3a;paint-order:stroke fill;white-space:nowrap}
+@media (hover:hover) and (pointer:fine){#hint-keys{display:block}}
+body.ended #hud,body.ended #hint,body.ended #stick,body.ended #edge{display:none}
+#end-tag{position:absolute;left:50%;top:calc(var(--st) + 11%);width:calc(var(--tw)*1px*var(--eu));transform:translateX(-50%);animation:tagIn .5s cubic-bezier(.2,1.4,.4,1) .15s both;cursor:pointer;display:block}
+#cta{position:absolute;left:50%;bottom:calc(var(--sb) + 52px*var(--eu));transform:translateX(-50%);display:flex;align-items:center;gap:calc(16px*var(--eu));white-space:nowrap}
+.badge{height:calc(52px*var(--eu));width:calc(168px*var(--eu));border-radius:calc(8px*var(--eu));background:#050505;border:calc(1.4px*var(--eu)) solid #b9b9b9;
+  display:flex;align-items:center;gap:calc(8px*var(--eu));padding:0 calc(11px*var(--eu));color:#fff;font-family:Helvetica,Arial,sans-serif;cursor:pointer;
+  box-shadow:0 calc(2px*var(--eu)) calc(8px*var(--eu)) rgba(90,100,140,.28)}
+.badge:active{filter:brightness(.85)}
+.badge i{width:calc(28px*var(--eu));flex:none;display:block}
+.badge svg,#replay svg{display:block;width:100%;height:100%}
+.badge span{display:flex;flex-direction:column;line-height:1}
+.badge small{font-size:calc(10.5px*var(--eu));letter-spacing:.2px}
+.badge b{font-size:calc(22.5px*var(--eu));font-weight:500;letter-spacing:-.3px;margin-top:calc(1px*var(--eu))}
+#b-apple{animation:popIn .3s cubic-bezier(.2,1.5,.4,1) .7s both}
+#b-google{animation:popIn .3s cubic-bezier(.2,1.5,.4,1) .85s both}
+#b-google small{font-size:calc(9.5px*var(--eu))}
+#b-google b{font-size:calc(21px*var(--eu))}
+#replay{position:absolute;right:calc(var(--sr) + 14px*var(--ui));top:calc(var(--st) + 14px*var(--ui));width:calc(46px*var(--ui));height:calc(46px*var(--ui));
+  border-radius:50%;border:0;background:rgba(52,66,96,.5);padding:calc(10px*var(--ui));cursor:pointer;animation:fadeIn .5s ease 2.6s both}
+#replay:active{background:rgba(52,66,96,.8)}
+@keyframes tagIn{0%{opacity:0;transform:translateX(-50%) scale(1.5)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:scale(1)}}
+@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
+/* landscape: title and badges on the left, characters on the right */
+body.land #end-tag{left:calc(var(--sl) + 27%);top:calc(var(--st) + 39% - 82px*var(--eu))}
+body.land #cta{left:calc(var(--sl) + 27%);bottom:auto;top:calc(var(--st) + 39% + 18px*var(--eu))}
+/* tall phones: the title sits a little lower, closer to the scene */
+body.tall #end-tag{top:calc(var(--st) + 15%)}
+body.tall #cta{bottom:calc(var(--sb) + 40px*var(--eu))}
+#fail{position:fixed;inset:0;display:none;align-items:center;justify-content:center;font:16px/1.4 sans-serif;color:#334;padding:24px;text-align:center}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="haze"></div>
+<div id="ui"></div>
+<div id="fail">This playable needs WebGL, which this browser or device does not provide.</div>
+<script>
+/*SCRIPT*/
+</script>
+</body>
+</html>
